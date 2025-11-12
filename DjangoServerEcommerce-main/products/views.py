@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from django.core.files.storage import default_storage
@@ -10,16 +10,17 @@ import os
 
 from products.models import Product
 from products.serializers import ProductSerializer
+from authentication.custom_permissions import IsAdmin
 
 
 @api_view(['POST'])
-@permission_classes([IsAdminUser])  # Solo ADMIN puede crear
+@permission_classes([IsAdmin])  # Solo ADMIN puede crear
 def create(request):
     serializer = ProductSerializer(data=request.data)
 
     if not serializer.is_valid():
         error_messages = []
-        for field, errors in serializer.errors.items():
+        for field, errors in serializer.errors.items():  # type: ignore
             for error in errors:
                 error_messages.append(f"{field}: {error}")
 
@@ -37,18 +38,18 @@ def create(request):
 
     if uploaded_images:
         for index, image in enumerate(uploaded_images[:2]):
-            file_path = f'uploads/products/{serializer.instance.id}/{image.name}'
+            file_path = f'uploads/products/{serializer.instance.id}/{image.name}'  # type: ignore
             saved_path = default_storage.save(file_path, ContentFile(image.read()))
             image_urls.append(default_storage.url(saved_path))
-        serializer.instance.image1 = image_urls[0] if len(image_urls) > 0 else None
-        serializer.instance.image2 = image_urls[1] if len(image_urls) > 1 else None
-        serializer.instance.save()
+        serializer.instance.image1 = image_urls[0] if len(image_urls) > 0 else None  # type: ignore
+        serializer.instance.image2 = image_urls[1] if len(image_urls) > 1 else None  # type: ignore
+        serializer.instance.save()  # type: ignore
 
     product_data = ProductSerializer(serializer.instance).data
     return Response({
-        **product_data,
-        "image1": f'http://{settings.GLOBAL_IP}:{settings.GLOBAL_HOST}{serializer.instance.image1}' if serializer.instance.image1 else None,
-        "image2": f'http://{settings.GLOBAL_IP}:{settings.GLOBAL_HOST}{serializer.instance.image2}' if serializer.instance.image2 else None,
+        **product_data,  # type: ignore
+        "image1": f'http://{settings.GLOBAL_IP}:{settings.GLOBAL_HOST}{serializer.instance.image1}' if serializer.instance.image1 else None,  # type: ignore
+        "image2": f'http://{settings.GLOBAL_IP}:{settings.GLOBAL_HOST}{serializer.instance.image2}' if serializer.instance.image2 else None,  # type: ignore
     }, status=status.HTTP_201_CREATED)
 
    
@@ -67,8 +68,8 @@ def get_products_by_category(request, id_category):
         
         for product in products:
             serializer_data = ProductSerializer(product).data
-            serializer_data['image1'] = f'http://{settings.GLOBAL_IP}:{settings.GLOBAL_HOST}{product.image1}' if product.image1 else None
-            serializer_data['image2'] = f'http://{settings.GLOBAL_IP}:{settings.GLOBAL_HOST}{product.image2}' if product.image2 else None
+            serializer_data['image1'] = f'http://{settings.GLOBAL_IP}:{settings.GLOBAL_HOST}{product.image1}' if product.image1 else None  # type: ignore
+            serializer_data['image2'] = f'http://{settings.GLOBAL_IP}:{settings.GLOBAL_HOST}{product.image2}' if product.image2 else None  # type: ignore
             serialized_products.append(serializer_data)
         return Response(serialized_products, status=status.HTTP_200_OK)
 
@@ -80,7 +81,7 @@ def get_products_by_category(request, id_category):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 @api_view(['DELETE'])
-@permission_classes([IsAdminUser])  # Solo ADMIN puede eliminar
+@permission_classes([IsAdmin])  # Solo ADMIN puede eliminar
 def delete(request, id_product):
     try:
         product = Product.objects.get(id=id_product)
@@ -106,7 +107,7 @@ def delete(request, id_product):
         }, status=status.HTTP_404_NOT_FOUND)
     
 @api_view(['PUT'])
-@permission_classes([IsAdminUser])  # Solo ADMIN puede editar
+@permission_classes([IsAdmin])  # Solo ADMIN puede editar
 def update(request, id_product):
     try:
         product = Product.objects.get(id=id_product)
@@ -120,7 +121,7 @@ def update(request, id_product):
     
     if not serializer.is_valid():
         error_messages = []
-        for field, errors in serializer.errors.items():
+        for field, errors in serializer.errors.items():  # type: ignore
             for error in errors:
                 error_messages.append(f"{field}: {error}")
 
@@ -162,7 +163,7 @@ def update(request, id_product):
         product.save()
     
     serializer_data = ProductSerializer(product).data
-    # serializer_data['image1'] = f'http://{settings.GLOBAL_IP}:{settings.GLOBAL_HOST}{product.image1}' if product.image1 else None
-    # serializer_data['image2'] = f'http://{settings.GLOBAL_IP}:{settings.GLOBAL_HOST}{product.image2}' if product.image2 else None
+    serializer_data['image1'] = f'http://{settings.GLOBAL_IP}:{settings.GLOBAL_HOST}{product.image1}' if product.image1 else None  # type: ignore
+    serializer_data['image2'] = f'http://{settings.GLOBAL_IP}:{settings.GLOBAL_HOST}{product.image2}' if product.image2 else None  # type: ignore
 
     return Response(serializer_data, status=status.HTTP_200_OK)

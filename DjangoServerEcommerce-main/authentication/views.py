@@ -31,12 +31,12 @@ def register(request):
         roles = Role.objects.filter(userhasroles__id_user=user)
         roles_serializer = RoleSerializer(roles, many=True)
         response_data = {
-             **serializer.data,
+             **serializer.data,  # type: ignore
              'roles': roles_serializer.data
         }
         return Response(response_data, status=status.HTTP_201_CREATED)
     error_messages = []
-    for field, errors in serializer.errors.items():
+    for field, errors in serializer.errors.items():  # type: ignore
         for error in errors:
             error_messages.append(f"{field}: {error}")
 
@@ -89,7 +89,7 @@ def login(request):
 
     if bcrypt.checkpw(password.encode('utf-8'), user.password.encode('utf-8')):
            refresh_token = getCustomTokenForUser(user)
-           access_token = str(refresh_token.access_token)
+           access_token = str(refresh_token.access_token)  # type: ignore
            roles = Role.objects.filter(userhasroles__id_user=user)
            roles_serializer = RoleSerializer(roles, many=True)
            user_data = {
